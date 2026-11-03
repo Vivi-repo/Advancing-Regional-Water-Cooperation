@@ -1,0 +1,18 @@
+# Metadata for the improved index (python -m wnego index). The Streamlit app ignores this file.
+# doc_type: legal | technical | background. The negotiation's legal advisor reads doc_type: legal only.
+# No primary treaty text is in this folder yet; the two reports of agreements stand in as "legal".
+foundational agreements.pdf: {doc_type: legal, countries: "Uzbekistan,Kazakhstan,Kyrgyzstan,Tajikistan,Turkmenistan"}
+Limits.pdf: {doc_type: legal, countries: "Uzbekistan,Turkmenistan,Tajikistan,Afghanistan"}
+government.txt: {doc_type: background, countries: "Uzbekistan,Turkmenistan,Afghanistan,Tajikistan,Kyrgyzstan"}
+info.txt: {doc_type: background}
+Glaciers.pdf: {doc_type: background}
+Uzbekistan Daryo.pdf: {doc_type: background, countries: Uzbekistan}
+infrastructure.txt: {doc_type: technical}
+lining.txt: {doc_type: technical}
+scaling.txt: {doc_type: technical}
+soln.txt: {doc_type: technical}
+10bcm.txt: {doc_type: technical}
+south_prearalie_monitoring_december_2024_en.pdf: {doc_type: technical, countries: Uzbekistan}
+south_prearalie_monitoring_june_2025_en.pdf: {doc_type: technical, countries: Uzbekistan}
+south_prearalie_monitoring_november_2025_en.pdf: {doc_type: technical, countries: Uzbekistan}
+south_prearalie_monitoring_september_2026_en.pdf: {doc_type: technical, countries: Uzbekistan}
