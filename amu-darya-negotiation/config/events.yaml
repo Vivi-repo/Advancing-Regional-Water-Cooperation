@@ -1,0 +1,39 @@
+# Event sets. An event fires at the start of a round: its public text goes into
+# the shared record, and its goal updates change the named countries' goal files.
+# Agents cannot rewrite their own goals; they can only ask (goal_revision_request),
+# and requests are logged, not applied. Each round logs the goal version in force,
+# so the effect of an event can be separated from model drift.
+#
+# Select a set with the experiment factor `events` (or --events on the CLI).
+# Goal update operations: set (replace a field), add (append to a list field),
+# remove (drop list items containing the given text), priorities (merge keys).
+# Events change instructions only; the hydrology and payoffs stay fixed within an
+# episode so outcomes remain comparable. Use the `scenario` factor for flow changes.
+
+none: []
+
+qosh_tepa_shock:
+  - round: 3
+    name: Qosh Tepa reaches full operation early
+    public: >-
+      Afghan authorities announce that the Qosh Tepa canal will reach full operation
+      ahead of schedule, with diversion capacity approaching the upper estimates
+      reported in the documents.
+    goal_updates:
+      Uzbekistan:
+        add: {objectives: "Obtain a binding cap on Qosh Tepa withdrawals in the growing season"}
+        priorities: {growing_water: critical}
+      Turkmenistan:
+        add: {objectives: "Obtain a binding cap on Qosh Tepa withdrawals in the growing season"}
+      Afghanistan:
+        priorities: {recognition: critical}
+
+energy_crisis:
+  - round: 2
+    name: Severe winter electricity shortage in Tajikistan
+    public: >-
+      Tajikistan reports severe winter electricity shortages and rolling blackouts.
+    goal_updates:
+      Tajikistan:
+        priorities: {winter_storage: critical}
+        add: {objectives: "Secure guaranteed winter electricity or payment from downstream states"}

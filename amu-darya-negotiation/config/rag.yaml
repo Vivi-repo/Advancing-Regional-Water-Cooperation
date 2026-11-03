@@ -1,0 +1,21 @@
+# Which retriever the agents use.
+#   chroma : the team's existing pipeline (ChromaDB + Ollama nomic-embed-text)
+#   bm25   : built in keyword search over corpus/, no services needed
+#   none   : no documents (same as grounding=none)
+backend: chroma
+
+corpus_dir: corpus            # used by bm25
+
+chroma:
+  # Same folder the Streamlit app uses (DB_PATH in the RAG app: ../chroma_db).
+  # Relative paths resolve against this project folder, not the working directory.
+  db_path: ../chroma_db
+  # local_docs = the app's original collection, read as is.
+  # amu_darya_v2 = improved index from `python -m wnego index --docs ../data --db ../chroma_db`
+  #                (stable ids, pages, doc_type), built from the same ../data folder as the app.
+  collection: amu_darya_v2
+  embed_model: nomic-embed-text
+  ollama_host: null           # e.g. http://localhost:11434 ; null = ollama default
+
+# How many passages each agent gets in its briefing.
+briefing_size: 8
