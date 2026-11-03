@@ -1,0 +1,8 @@
+condition,n_in_scope,n_out_of_scope,source_hit_rate,context_recall,keyword_coverage,refusal_rate_when_context_complete,keyword_coverage_when_context_complete,numbers_not_in_context,in_scope_refusal_rate,out_of_scope_refusal_rate,run_to_run_consistency,mean_seconds
+k=1|basic,17,5,0.471,0.324,0.235,0.2,0.8,0.294,0.706,1,,1.65
+k=3|basic,17,5,0.882,0.735,0.5,0.167,0.708,0.412,0.235,1,,2.55
+k=5|basic,17,5,0.882,0.824,0.559,0.286,0.679,0.294,0.353,1,,2.41
+k=1|structured,17,5,0.471,0.324,0.176,0.2,0.6,0.294,0.235,0.8,,2.51
+k=3|structured,17,5,0.882,0.735,0.559,0,0.792,0.471,0.118,0.8,,3.46
+k=5|structured,17,5,0.882,0.824,0.559,0,0.679,0.294,0.118,0.6,,3.58
+baseline(no retrieval),17,5,,,0.059,,,,0,0,,5.01
