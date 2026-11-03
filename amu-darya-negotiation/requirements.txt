@@ -1,0 +1,10 @@
+numpy
+scipy
+pandas
+pyyaml
+pypdf
+chromadb
+ollama
+anthropic
+openai
+pytest

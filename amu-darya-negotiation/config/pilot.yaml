@@ -1,0 +1,21 @@
+# First real pilot: the smallest grid that tests Neil's persona x payoff effect
+# in multiround negotiation. 2 x 2 conditions x 5 seeds = 20 episodes per model,
+# about 50 to 70 model calls each.
+name: pilot_real
+
+models:
+  - {name: qwen14b, type: ollama, model: "qwen2.5:14b"}
+  # - {name: qwen32b, type: ollama, model: "qwen2.5:32b"}     # if the machine has ~24 GB free memory
+  # - {name: claude, type: anthropic, model: claude-sonnet-5-5}
+
+factors:
+  persona: [none, rich]
+  payoff: [hidden, full]
+  grounding: [rag]
+  legal: ["on"]
+  events: [none]
+
+scenarios: [dry]        # scarcity makes the tradeoffs bite
+seeds: 5
+max_rounds: 6
+temperature: 0.7
