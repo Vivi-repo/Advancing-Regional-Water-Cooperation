@@ -1,0 +1,23 @@
+id,category,query,in_scope,expected_source,expected_keywords,ground_truth,context_keywords
+Q01,monitoring,"According to the September 2026 monitoring report, what was the open water surface area of the Western part of the Aral Sea on 23 September 2026?",1,south_prearalie_monitoring_september_2026_en.pdf,182631,"182,631 ha (Table 1, Western part, water surface, 23.09.2026)",
+Q02,monitoring,How did the dried area of the Western part of the Aral Sea change between 23 November 2025 and 23 September 2026?,1,south_prearalie_monitoring_september_2026_en.pdf,22415;37232,"Increased from 22,415 ha to 37,232 ha (Table 1)",
+Q03,monitoring,What was the wetland area of the Sudoche water body in the Aral Region on 22 December 2024?,1,south_prearalie_monitoring_december_2024_en.pdf,46629,"46,629 ha (Table 1 of the December 2024 report)",
+Q04,hydrology_context,What is the average annual natural flow of the Amu Darya and how much of it typically reaches the middle and lower reaches?,1,infrastructure.txt,70;35,About 70-80 BCM natural flow; about 35-50 BCM reaches the middle and lower reaches,
+Q05,cost_scaling,How many hectares of cotton must be converted to drip irrigation to save 5 BCM of water?,1,scaling.txt,714,"5,000,000,000 / 7,000 = ~714,286 ha (scaling.txt rule 2)",7000
+Q06,cost_scaling,What would it cost in capital spending to convert enough cotton to drip irrigation to save 3 BCM?,1,scaling.txt,428;771,"~428,571 ha x $1,800/ha = ~$771 million (scaling.txt rules 2 and 4)",7000;1800
+Q07,cost_scaling,How many hectares of paddy rice must be switched to wheat to save 4 BCM?,1,scaling.txt,307,"4,000,000,000 / 13,000 = ~307,692 ha (scaling.txt rule 3)",13000
+Q08,cost_scaling,What percentage of the primary and secondary canal network must be lined to save 6 BCM per year?,1,scaling.txt,20%|20 percent,6 / 0.30 = 20% (scaling.txt rule 1),0.30
+Q09,solutions,How much does installed geomembrane canal lining cost per square meter compared with concrete lining?,1,lining.txt;soln.txt,12;25,Geomembrane $5-$12/m2 installed; concrete $15-$25/m2,
+Q10,solutions,What does laser land leveling cost per hectare and how much does it reduce irrigation water requirements?,1,soln.txt,40;80,$40-$80 per hectare; reduces irrigation water requirements by 20%-25%,
+Q11,solutions,What is the estimated total cost of the hybrid mix that achieves 10 BCM in water savings?,1,10bcm.txt,1.5;2.8,$1.5 billion to $2.8 billion,
+Q12,socioeconomic,Which country diverts over 30% of the Amu Darya's flow through the Karakum Canal?,1,info.txt,turkmenistan,Turkmenistan (info.txt),
+Q13,socioeconomic,How much water could the Qosh Tepa Canal divert each year?,1,info.txt,13,"Up to 13 cubic kilometers (BCM) per year, ~15-20% of Amu Darya flow",
+Q14,governance,Why does Uzbekistan see Afghanistan's Qosh Tepa Canal as a security threat?,1,government.txt,downstream|tail-end|lower-basin,Uzbekistan sits at the tail-end of the Amu Darya and is highly vulnerable to upstream flow reductions,
+Q15,governance,What is Tajikistan's position on storing and releasing water?,1,government.txt,hydropower|energy,"Tajikistan treats water as an energy asset: store in summer, release in winter for hydropower",
+Q16,recent_news,What did the ICWC agree at its 95th meeting in October 2026?,1,Limits.pdf,withdrawal|limits,"Agreed national water withdrawal limits for the Amu Darya and Syr Darya for fall/winter 2026-2027, but national figures are unpublished",
+Q17,recent_news,What does Uzbekistan plan to do about water-saving technologies on cultivated land?,1,Uzbekistan Daryo.pdf,five years,Extend water-saving technologies to all cultivated land within five years,
+Q18,out_of_scope,What is the capital city of Australia?,0,,,Should refuse: not in the knowledge base,
+Q19,out_of_scope,How many people live in Tashkent?,0,,,Should refuse: Tashkent population is not in the knowledge base,
+Q20,out_of_scope,What is the exact 2026 national water budget of Turkmenistan in US dollars?,0,,,Should refuse: not in the knowledge base,
+Q21,out_of_scope,Write a Python function that sorts a list.,0,,,Should refuse: unrelated to the knowledge base,
+Q22,unpublished,What is Uzbekistan's national water withdrawal quota for fall and winter 2026-2027?,0,,,Should say it cannot be found: Limits.pdf states the national figures were not published,
