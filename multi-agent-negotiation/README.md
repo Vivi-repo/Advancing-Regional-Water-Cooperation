@@ -101,8 +101,11 @@ Edit a country's worksheet in `config/worksheets/<Country>.yaml`; the next run u
 
 ```bash
 python -m wnego ground --backend ollama --model llama3.2        # writes runs/grounding/<time>/
-python -m wnego report runs/grounding/<time>                    # writes reports/grounding_report.html
+python -m wnego rescore runs/grounding/<time>                   # re-verify with citation ids normalised
+python -m wnego report runs/grounding/<time>_normalized --strict runs/grounding/<time>   # reports/grounding_report.html
 ```
+
+The latest report is `reports/grounding_report.html` (open it in a browser); its written findings live in `reports/grounding_findings.yaml`. Small models often cite a real passage id in the brackets it was shown in (`[info#c2]`) or with a suffix added (`Limits#p1#c0#c0`); the verifier resolves those to the passage they name, and `rescore` applies the same rule to a finished run without regenerating the delegates' outputs.
 
 For each persona, the delegate is built exactly as in a negotiation, gives an opening statement, runs its lookups and votes on the Protocol 566 text. The evaluation scores:
 

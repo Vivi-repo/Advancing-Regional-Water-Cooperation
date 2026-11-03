@@ -260,6 +260,33 @@ def eval_persona(ws: dict, llm, retriever, embed, lib: Library, basin: Basin, se
     }
 
 
+def rescore(run_dir, out_dir, llm, retriever, embed, docs_dir, log=print) -> None:
+    """Re-verify a finished run's claims with citation ids normalised (brackets
+    stripped, appended suffixes resolved to the passage they start with). The
+    delegates' outputs are not regenerated: same claims, same passages shown,
+    only the id matching and the verifier call are redone."""
+    run_dir, out = Path(run_dir), Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    lib = Library(retriever, embed, Path(docs_dir))
+    for f in sorted(run_dir.glob("P*.json")):
+        r = json.loads(f.read_text())
+        shown_ids = {b["id"] for b in r["retrieval"]["briefing"]} | {
+            pid for t in r["retrieval"]["lookups"] for pid in t.get("results", [])}
+        shown = {pid: p for pid in shown_ids if (p := retriever.get(pid)) is not None}
+        raw = [{"text": c["text"], "cite": c.get("cite_raw") or c["cite"]} for c in r["claims_all"]["claims"]]
+        judge = Recorder(llm, "verifier")
+        checked = Verifier(judge, retriever, normalize_ids=True).check(raw)
+        r["claims_all"] = _claims_metrics(checked, shown, lib, np.random.default_rng(0))
+        r["rescored"] = {"from": str(run_dir), "normalize_ids": True, "verifier_calls": len(judge.log)}
+        (out / f.name).write_text(json.dumps(r, indent=1, default=float))
+        log(f"{r['id']}: valid {r['claims_all']['cite_valid_rate']} grounded {r['claims_all']['grounded_claim_rate']}")
+    summary = run_dir / "summary.json"
+    if summary.exists():
+        s = json.loads(summary.read_text())
+        s["meta"]["rescored"] = "citation ids normalised"
+        (out / "summary.json").write_text(json.dumps(s, indent=1, default=float))
+
+
 FLAT = [("worksheet", "source_coverage"), ("worksheet", "source_resolvable"), ("worksheet", "attribution_acc"),
         ("worksheet", "support_cos"), ("worksheet", "numeric_fidelity"),
         ("retrieval", "briefing_relevance"), ("retrieval", "briefing_score"), ("retrieval", "briefing_sources"),

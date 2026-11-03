@@ -10,7 +10,8 @@
   python -m wnego worksheets                                        # Part C checks on config/worksheets
   python -m wnego synth                                             # write the 10 synthetic personas
   python -m wnego ground --backend ollama --model llama3.2         # RAG truth grounding evaluation
-  python -m wnego report runs/grounding/llama3.2_chroma            # HTML report of a grounding run
+  python -m wnego rescore runs/grounding/llama3.2_chroma           # re-verify with citation ids normalised
+  python -m wnego report runs/grounding/llama3.2_chroma_normalized --strict runs/grounding/llama3.2_chroma
   python -m wnego serve                                             # API for the web front end
 """
 import argparse
@@ -93,10 +94,17 @@ def main():
     g.add_argument("--collection", default=None)
     g.add_argument("--out", default=None)
 
+    rs = sub.add_parser("rescore", help="re-verify a grounding run's claims with citation ids normalised")
+    rs.add_argument("run_dir")
+    rs.add_argument("--backend", default="ollama")
+    rs.add_argument("--model", default="llama3.2")
+    rs.add_argument("--out", default=None, help="default: <run_dir>_normalized")
+
     rp = sub.add_parser("report", help="HTML report of a grounding evaluation run")
     rp.add_argument("run_dir")
     rp.add_argument("--findings", default=str(ROOT / "reports/grounding_findings.yaml"))
     rp.add_argument("--out", default=str(ROOT / "reports/grounding_report.html"))
+    rp.add_argument("--strict", default=None, help="the run as generated, when run_dir is a rescored run")
 
     sv = sub.add_parser("serve", help="HTTP API for the web front end")
     sv.add_argument("--port", type=int, default=8000)
@@ -153,9 +161,16 @@ def main():
         _, head = grounding_eval.run(a.personas, make_llm(spec, a.temperature), ret, embed, a.docs, out, a.scenario, seed=a.seed)
         print(json.dumps(head, indent=1, default=float))
         print("results in", out)
+    elif a.cmd == "rescore":
+        from .grounding_eval import rescore
+        from .llm import make_llm
+        cfg = load_configs()
+        ret = make_retriever(cfg["rag"], ROOT)
+        rescore(a.run_dir, a.out or a.run_dir.rstrip("/\\") + "_normalized",
+                make_llm({"type": a.backend, "model": a.model}), ret, ret.embed, ROOT.parent / "data")
     elif a.cmd == "report":
         from .report import render
-        print("wrote", render(a.run_dir, a.findings, a.out))
+        print("wrote", render(a.run_dir, a.findings, a.out, a.strict))
     elif a.cmd == "serve":
         import uvicorn
         uvicorn.run("wnego.api:app", host="127.0.0.1", port=a.port)

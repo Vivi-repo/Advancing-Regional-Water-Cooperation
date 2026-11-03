@@ -79,7 +79,7 @@ def headline(recs: list[dict]) -> dict:
 
 # ---------------------------------------------------------------------------
 # SVG charts. One scale per chart; text uses text tokens, marks use series tokens.
-W, LABEL, RIGHT = 680, 176, 56
+W, LABEL, RIGHT = 680, 176, 78
 
 
 def _bar_path(x0, y, w, h, r=4):
@@ -142,8 +142,10 @@ def stacked(rows, title=""):
     return "".join(out)
 
 
-def dumbbell(rows, domain=(0.4, 1.0), title=""):
-    """rows: [(label, cited, random)] cosine of claim to its cited passage vs to random passages."""
+def dumbbell(rows, domain=(0.4, 1.0), title="", names=("cited passage", "random passages"),
+             tick=lambda t: f"{t:.1f}", val=lambda v: f"{v:.3f}", gap=lambda d: f"+{d:.2f}",
+             empty="no claim with a valid citation"):
+    """rows: [(label, a, b)]: two values per row, a in series 1, b in series 2."""
     band = 30
     top, plot = 22, W - LABEL - RIGHT
     h = top + band * len(rows) + 8
@@ -153,18 +155,18 @@ def dumbbell(rows, domain=(0.4, 1.0), title=""):
     for t in [lo + k * (hi - lo) / 6 for k in range(7)]:
         x = sx(t)
         out.append(f'<line x1="{x:.1f}" x2="{x:.1f}" y1="{top - 6}" y2="{h - 8}" class="grid"/>'
-                   f'<text x="{x:.1f}" y="{top - 10}" class="tick" text-anchor="middle">{t:.1f}</text>')
+                   f'<text x="{x:.1f}" y="{top - 10}" class="tick" text-anchor="middle">{E(tick(t))}</text>')
     for i, (label, a, b) in enumerate(rows):
         y = top + i * band + band / 2
         out.append(f'<text x="{LABEL - 10}" y="{y + 4:.1f}" class="lab" text-anchor="end">{E(label)}</text>')
         if _num(a) is None:
-            out.append(f'<text x="{LABEL + 4}" y="{y + 4:.1f}" class="muted">no claim with a valid citation</text>')
+            out.append(f'<text x="{LABEL + 4}" y="{y + 4:.1f}" class="muted">{E(empty)}</text>')
             continue
         out.append(f'<line x1="{sx(b):.1f}" x2="{sx(a):.1f}" y1="{y}" y2="{y}" class="link"/>')
-        for v, col, name in ((b, "--s2", "random passages"), (a, "--s1", "cited passage")):
+        for v, col, name in ((b, "--s2", names[1]), (a, "--s1", names[0])):
             out.append(f'<circle cx="{sx(v):.1f}" cy="{y}" r="5" style="fill:var({col})" class="dot" '
-                       f'data-tip="{E(f"{label}: {v:.3f} similarity to {name}")}"/>')
-        out.append(f'<text x="{sx(max(a, b)) + 10:.1f}" y="{y + 4:.1f}" class="val">+{a - b:.2f}</text>')
+                       f'data-tip="{E(f"{label}, {name}: {val(v)}")}"/>')
+        out.append(f'<text x="{sx(max(a, b)) + 10:.1f}" y="{y + 4:.1f}" class="val">{E(gap(a - b))}</text>')
     out.append("</svg>")
     return "".join(out)
 
@@ -179,7 +181,10 @@ def short(r):
     return f'{r["id"][:3]} {r["country"][:3].upper()} {r["perturbation"].replace("_", " ")}'
 
 
-def render(run_dir: str | Path, findings: str | Path | None = None, out: str | Path | None = None) -> Path:
+def render(run_dir: str | Path, findings: str | Path | None = None, out: str | Path | None = None,
+           strict_dir: str | Path | None = None) -> Path:
+    """run_dir: the records to report (normally the rescored run with citation ids
+    normalised). strict_dir: the run as generated, for the before/after comparison."""
     run_dir = Path(run_dir)
     recs = load_records(run_dir)
     if not recs:
@@ -188,6 +193,14 @@ def render(run_dir: str | Path, findings: str | Path | None = None, out: str | P
     if (run_dir / "summary.json").exists():
         meta = json.loads((run_dir / "summary.json").read_text()).get("meta", {})
     H = headline(recs)
+    strict = load_records(Path(strict_dir)) if strict_dir else []
+    Hs = headline(strict) if strict else None
+    # the verifier judged identical claims twice when a citation was valid in both passes
+    twice = [(ca["verdict"], cb["verdict"]) for ra, rb in zip(strict, recs)
+             for ca, cb in zip(ra["claims_all"]["claims"], rb["claims_all"]["claims"])
+             if ca["in_context"] and cb["in_context"] and ca["cite"] == cb["cite"]]
+    accepts = [r for r in recs if r["vote"] == "accept"]
+    below = [r for r in accepts if r["utility"] < r["no_deal"]]
     notes = yaml.safe_load(open(findings, encoding="utf-8")) if findings and Path(findings).exists() else {}
 
     grounded_rows = [(short(r), _num(r["claims_all"]["grounded_claim_rate"]),
@@ -209,15 +222,23 @@ def render(run_dir: str | Path, findings: str | Path | None = None, out: str | P
     attr_rows = [(short(r), _num(r["worksheet"]["attribution_acc"]),
                   f'{short(r)}: best-matching library chunk is in a cited file for {_pct(r["worksheet"]["attribution_acc"])} of answers')
                  for r in recs]
+    valid_rows = [(short(r), _num(r["claims_all"]["cite_valid_rate"]), _num(rs["claims_all"]["cite_valid_rate"]))
+                  for r, rs in zip(recs, strict)]
     lo = min([v for _, a, b in cos_rows for v in (a, b) if v is not None] or [0.4])
     cos_domain = (math.floor(lo * 10) / 10, 1.0)
 
     def tile(value, label, sub):
         return f'<div class="tile"><div class="big">{E(value)}</div><div class="tlabel">{E(label)}</div><div class="tsub">{E(sub)}</div></div>'
 
+    vs = f'; {_pct(Hs["cite_valid"])} as generated' if Hs else ""
+    gs = f'; {_pct(Hs["grounded"])} as generated' if Hs else ""
     tiles = "".join([
-        tile(_pct(H["grounded"]), "Grounded claims", f'{H["claims"]} claims from {H["personas"]} personas: valid citation and judged supported or partly supported'),
-        tile(_pct(H["cite_valid"]), "Valid citations", "claim cites a passage the delegate was actually shown"),
+        tile(_pct(H["cite_valid"]), "Valid citations", f'{round(H["cite_valid"] * H["claims"])} of {H["claims"]} claims cite a passage the delegate was shown, after id normalisation{vs}'),
+        tile(_pct(H["grounded"]), "Grounded claims", f'valid citation and judged supported or partly supported{gs}'),
+        tile(f'{sum(a == b for a, b in twice)} of {len(twice)}', "Verifier agrees with itself",
+             "identical claims and passages judged twice by the same model"),
+        tile(f'{len(below)} of {len(accepts)}', "Accepts below no deal",
+             "accept votes for a text worth less to that country than walking away, with payoffs shown"),
         tile(_pct(H["ungrounded_rate"]), "Invented figures", f'{H["ungrounded_numbers"]} of {H["stated_numbers"]} numbers in public statements appear in nothing the delegate saw'),
         tile(f'{H["planted_hits"]} of {H["planted"]}', "Planted false figures repeated", "by the false-facts persona's delegate"),
         tile(_pct(H["ws_attr"]), "Worksheet attribution", "answers whose closest library passage is in the file they cite"),
@@ -255,6 +276,10 @@ def render(run_dir: str | Path, findings: str | Path | None = None, out: str | P
         collection=E(str(meta.get("collection") or "amu_darya_v2")), tiles=tiles,
         findings=find_html or "<li>Findings not written yet.</li>", caveats=caveat_html,
         grounded_chart=hbars(grounded_rows, title="Grounded claim rate by persona"),
+        valid_legend=legend([("After id normalisation", "--s1"), ("As generated", "--s2")]),
+        valid_chart=dumbbell(valid_rows, (0, 1), "Valid citations before and after id normalisation",
+                             names=("after id normalisation", "as generated"), tick=_pct, val=_pct,
+                             gap=lambda d: f"+{100 * d:.0f} pts", empty="no claims") if strict else "",
         verdict_legend=legend([(n, c) for _, n, c in VERDICTS]),
         verdict_chart=stacked(verdict_rows, title="Verifier verdicts by persona"),
         cos_legend=legend([("Cited passage", "--s1"), ("Random library passages", "--s2")]),
@@ -270,7 +295,11 @@ def render(run_dir: str | Path, findings: str | Path | None = None, out: str | P
     return out
 
 
-TEMPLATE = """<title>Persona Grounding Report</title>
+TEMPLATE = """<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Persona Grounding Report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -302,7 +331,7 @@ p {{ margin: 0; max-width: 68ch }}
 .meta {{ font: 13px/1.5 var(--mono); color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 4px 18px }}
 section {{ display: grid; gap: 14px; min-width: 0 }}
 .sub {{ color: var(--ink-2) }}
-.tiles {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule) }}
+.tiles {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule) }}
 .tile {{ background: var(--panel); padding: 18px 18px 16px; display: grid; gap: 4px; align-content: start }}
 .big {{ font: 600 34px/1 var(--display); font-variant-numeric: tabular-nums }}
 .tlabel {{ font-weight: 500 }}
@@ -334,6 +363,8 @@ th {{ font-weight: 500; color: var(--ink-3); position: sticky; top: 0; backgroun
 td:nth-child(-n+3), th:nth-child(-n+3) {{ text-align: left }}
 dl {{ display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; font-size: 14px }}
 dt {{ font-weight: 500 }} dd {{ margin: 0; color: var(--ink-2) }}
+@media (max-width: 820px) {{ .tiles {{ grid-template-columns: repeat(2, 1fr) }} }}
+@media (max-width: 460px) {{ .tiles {{ grid-template-columns: 1fr }} }}
 @media (max-width: 560px) {{ dl {{ grid-template-columns: 1fr }} dd {{ margin-bottom: 8px }} }}
 #tip {{ position: fixed; pointer-events: none; background: var(--ink); color: var(--bg); font: 12px/1.4 var(--mono); padding: 6px 8px; max-width: 280px; z-index: 5 }}
 </style>
@@ -353,6 +384,13 @@ dt {{ font-weight: 500 }} dd {{ margin: 0; color: var(--ink-2) }}
 <section>
   <h2>What the run shows</h2>
   <ul class="list">{findings}</ul>
+</section>
+
+<section>
+  <h2>Most bad citations are formatting, not fabrication</h2>
+  <p class="sub">The model often copies the square brackets passages are shown in, or appends a suffix to a real id. The verifier now resolves those to the passage they name; ids that match no passage stay invalid.</p>
+  {valid_legend}
+  <div class="chart">{valid_chart}</div>
 </section>
 
 <section>
