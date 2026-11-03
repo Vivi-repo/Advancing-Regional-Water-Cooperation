@@ -1,0 +1,75 @@
+# Amu Darya negotiation environment.
+#
+# Every number tagged ILLUSTRATIVE is a placeholder chosen so the game has a real
+# tension. Calibrate these against the corpus (and cite the source next to the
+# value) before reporting any result. Values tagged SOURCED come from the seed
+# corpus documents named in the comment.
+
+basin: Amu Darya
+unit: km3                     # volumes are km3 (= bcm) per year
+value_unit: USD million equivalent
+
+seasons: [growing, winter]    # growing = April to September, winter = October to March
+
+# Allocable flow per season before any upstream storage shift.
+# 61.5 km3 total = Protocol 566 limit (SOURCED: protocol_566_allocation.md).
+# 70/30 seasonal split and the dry/wet multipliers are ILLUSTRATIVE.
+flow_scenarios:
+  normal: {growing: 43.0, winter: 18.5}
+  dry:    {growing: 34.4, winter: 14.8}
+  wet:    {growing: 49.5, winter: 21.3}
+
+# Minimum flow that must reach the Aral delta, per season. ILLUSTRATIVE.
+environmental_flow: {growing: 4.0, winter: 2.0}
+
+# Tajikistan can hold growing season water in Nurek/Rogun and release it in winter
+# for electricity. Max volume shiftable per year. ILLUSTRATIVE.
+max_storage_shift: 6.0
+storage_country: Tajikistan
+
+# Historical reference shares (SOURCED: protocol_566_allocation.md).
+# Used only as the status quo anchor and for the "anchoring to precedent" metric.
+protocol_566_km3:
+  Uzbekistan: 29.6
+  Turkmenistan: 22.0
+  Tajikistan: 9.5
+  Afghanistan: 2.1     # assumed by Protocol 566, Afghanistan was not consulted
+
+countries:
+  Afghanistan:
+    position: upstream (Panj and northern tributaries), building Qosh Tepa canal
+    irrigation_growing: 420     # A in A*ln(1+w). ILLUSTRATIVE
+    irrigation_winter: 40
+    hydropower_per_km3_shift: 0
+    delta_penalty_per_km3: 0
+    unilateral_take: {growing: 6.0, winter: 1.0}   # Qosh Tepa without a deal. ILLUSTRATIVE (sources cite up to 10 km3/yr at full operation)
+  Tajikistan:
+    position: upstream, Vakhsh and Panj, Nurek and Rogun storage
+    irrigation_growing: 260
+    irrigation_winter: 30
+    hydropower_per_km3_shift: 120  # winter electricity value of each km3 shifted. ILLUSTRATIVE
+    delta_penalty_per_km3: 0
+    unilateral_take: {growing: 6.6, winter: 2.9}   # Protocol 566 share split 70/30
+  Uzbekistan:
+    position: midstream and downstream, Khorezm and Karakalpakstan at the delta
+    irrigation_growing: 900
+    irrigation_winter: 90
+    hydropower_per_km3_shift: 0
+    delta_penalty_per_km3: 140     # cost per km3 of shortfall below environmental flow. ILLUSTRATIVE
+  Turkmenistan:
+    position: midstream, Karakum Canal
+    irrigation_growing: 720
+    irrigation_winter: 70
+    hydropower_per_km3_shift: 0
+    delta_penalty_per_km3: 50
+
+# What happens with no agreement (each delegate's walk away point):
+# Afghanistan and Tajikistan take their unilateral volumes, Tajikistan shifts the
+# full storage volume to winter, Uzbekistan and Turkmenistan split what is left by
+# their Protocol 566 ratio, nothing is reserved for the delta, and every country
+# pays a diplomatic conflict cost.
+no_deal:
+  storage_shift: 6.0
+  conflict_cost: 40            # ILLUSTRATIVE, paid by every country
+
+transfer_bounds: 400           # max absolute net side payment per country
